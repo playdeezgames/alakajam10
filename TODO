@@ -1,0 +1,17 @@
+Absolute Musts Before Submission:
+    ✔ surveying stars is a thing @done(20-09-19 07:37)
+        ✔ marks the star as surveyed @done(20-09-19 07:24)
+        ✔ gives some sort of score (put it in a set in the ship) @done(20-09-19 07:24)
+        ✔ win condition - all stars surveyed @done(20-09-19 07:37)
+    ✔ surveying wormhole randomly teleports @done(20-09-19 07:24)
+        ✔ does not mark the wormhole surveyed @done(20-09-19 07:24)
+            player has to remember entity number!
+    ☐ refueling is a thing
+        ☐ happens at stars that have been surveyed only
+        ☐ stars have a refueling potential
+        ☐ stars generate refueling potential at a particular rate
+        ☐ stars have a maximum refueling potential
+    ✔ scramble entity numbers so that the wormholes will not be known immediately @done(20-09-19 07:34)
+Stretch:
+    ☐ a list of stars and their bearings that have been surveyed
+    ☐ moar musics

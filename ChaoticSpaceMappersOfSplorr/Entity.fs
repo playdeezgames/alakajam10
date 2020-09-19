@@ -48,6 +48,10 @@ module Entity =
     let SetZ (z:float) (entity:Entity) : Entity =
         {entity with
             Z = z}
+    
+    let TransformEntityType (tranform:EntityType -> EntityType) (entity:Entity) : Entity =
+        {entity with 
+            EntityType = entity.EntityType |> tranform}
 
     let Move (interactor: Entity -> Entity option * 'T) (updator: Entity option -> 'T -> 'T) (entity:Entity) : 'T =
         let deltaX = entity.Speed * cos(entity.Theta|> Utility.ToRadians) * cos(entity.Phi|> Utility.ToRadians)
@@ -57,6 +61,7 @@ module Entity =
         |> SetX (entity.X + deltaX)
         |> SetY (entity.Y + deltaY)
         |> SetZ (entity.Z + deltaZ)
+        |> TransformEntityType EntityType.DoMove
         |> interactor
         ||> updator
 
@@ -64,6 +69,16 @@ module Entity =
         let deltaX = first.X - second.X
         let deltaY = first.Y - second.Y
         let deltaZ = first.Z - second.Z 
-        sqrt(deltaX * deltaX + deltaY * deltaY + deltaZ * deltaZ)
+        sqrt(deltaX ** 2.0 + deltaY ** 2.0 + deltaZ ** 2.0)
+
+    let BearingBetween (``to``:Entity) (from:Entity) : float * float =
+        let deltaX = from.X - ``to``.X
+        let deltaY = from.Y - ``to``.Y
+        let deltaZ = from.Z - ``to``.Z 
+        let xyDistance = sqrt(deltaX ** 2.0 + deltaY ** 2.0)
+        (atan2 deltaY deltaX |> Utility.ToDegrees,
+            atan2 deltaZ xyDistance |> Utility.ToDegrees)
+        
+        
 
 
