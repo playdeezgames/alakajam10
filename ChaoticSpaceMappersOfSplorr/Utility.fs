@@ -1,6 +1,7 @@
 ﻿namespace CSMoS
 
 open System
+open System.Threading
 
 module Utility = 
     let random = Random()
@@ -28,6 +29,9 @@ module Utility =
             notes
             |> List.iter
                 (fun (freq, dur) ->
-                    Console.Beep(freq, dur))
+                    if freq < 32 || freq > 32768 then
+                        Thread.Sleep(dur)
+                    else
+                        Console.Beep(freq, dur))
         with
         | ex -> ()

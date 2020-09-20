@@ -87,12 +87,12 @@ module Game =
         printfn "Speed: (%f)" entity.Speed
         let ship = entity.EntityType |> EntityType.GetShip |> Option.get
         
-        printfn "Surveyed Entities: %d" ship.SurveyedEntities.Count
+        printfn "Surveyed Entities: %d/%d" ship.SurveyedEntities.Count Constants.StarCount
         printfn "Fuel: %d/%d" ship.Fuel ship.MaximumFuel
         ReportInteractableEntities entity world
         ReportViewableEntities entity world
         if ship.SurveyedEntities.Count = Constants.StarCount then
-            Utility.PlayMusic Constants.StartSong //TODO: different music
+            Utility.PlayMusic Constants.WinSong
             ["You won the game!"]
             |> Utility.DisplayMessages
             None

@@ -11,7 +11,8 @@ module Survey=
     let private HandleInteraction (otherId:Guid) (other:Entity) (entity:Entity) (world: World) : World option =
         match other.EntityType with
         | Star star ->
-            //TODO : add music
+            Constants.SurveyStarSong
+            |> Utility.PlayMusic
             ["Star surveyed!"]
             |> Utility.DisplayMessages
             //set star to surveyed
@@ -31,7 +32,8 @@ module Survey=
             |> World.SetEntity world.PlayerId updatedEntity
             |> Some
         | Wormhole ->
-            //TODO : add music
+            Constants.WormholeSong
+            |> Utility.PlayMusic
             [
                 "It was not a star, but a wormhole!"
                 "What's on the other end?"

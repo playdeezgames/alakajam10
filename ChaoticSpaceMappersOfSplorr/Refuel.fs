@@ -9,8 +9,9 @@ module Refuel =
         |> Utility.DisplayMessages
 
     let private HandleStarInteraction (otherId:Guid) (star:Star) (other:Entity) (entity:Entity) (world: World) : World option =
-        //TODO: music
-        ["You refueld yer ship!"]
+        Constants.RefuelSong
+        |> Utility.PlayMusic
+        ["You refueled yer ship!"]
         |> Utility.DisplayMessages
         let available = star.FuelAvailable |> int32
         let updatedStar =
