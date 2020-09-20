@@ -4,7 +4,10 @@ open System
 
 module Utility = 
     let random = Random()
-    let ReadLine () : string list = Console.ReadLine().ToLower().Split(' ') |> Array.toList
+    let ReadLine () : string list = 
+        printfn ""
+        printf ">"
+        Console.ReadLine().ToLower().Split(' ') |> Array.toList
 
     let ToRadians (degrees:float) : float =
         degrees/180.0*Math.PI

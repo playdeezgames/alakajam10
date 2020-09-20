@@ -10,6 +10,7 @@ module Constants =
     let internal WormholeCount = 10
     let internal StarRefuelRateRange = (1.0, 5.0)
     let internal StarMaximumFuelRange = (10.0, 50.0)
+    let internal MaximumFuel = 100
     let internal StartSong = 
         [
             261, 200
@@ -19,16 +20,25 @@ module Constants =
             392, 200
             523, 400
         ]
+    let internal LoseSong =
+        [
+            349, 200 //F
+            261, 200 //C
+            293, 200 //D
+            261, 400 //C
+            329, 200 //E
+            349, 600 //F
+        ]
     let internal IntroSong = 
         [
-            261, 100
-            293, 100
-            329, 100
-            349, 100
-            392, 100
-            440, 100
-            494, 100
-            523, 100
+            261, 100 //C
+            293, 100 //D
+            329, 100 //E
+            349, 100 //F
+            392, 100 //G
+            440, 100 //A
+            494, 100 //B
+            523, 100 //C
         ]
     let internal OutroSong = 
         [
@@ -45,5 +55,8 @@ module Constants =
         [
             130, 250
         ]
+    let internal RefuelSong =
+        [261..523]
+        |> List.map (fun x -> (x,5))
 
 

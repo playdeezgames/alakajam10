@@ -27,4 +27,8 @@ module EntityType =
         | _ -> None
 
     let DoMove (entityType: EntityType) : EntityType =
-        entityType
+        match entityType with
+        | Star star ->
+            star |> Star.GenerateFuel |> Star
+        | _ ->
+            entityType

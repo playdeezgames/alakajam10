@@ -17,6 +17,7 @@
     <Compile Include="SetSpeed.fs" />
     <Compile Include="Survey.fs" />
     <Compile Include="Move.fs" />
+    <Compile Include="Refuel.fs" />
     <Compile Include="Game.fs" />
     <Compile Include="MainMenu.fs" />
     <Compile Include="Runner.fs" />
