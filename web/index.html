@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chaotic Space Mappers of SPLORR!!</title>
+<style>
+	html, body { height: 100%; margin: 0; background: #0c0c0c; color: #ccc; font-family: Consolas, "DejaVu Sans Mono", monospace; font-size: 16px; }
+	body { display: flex; flex-direction: column; }
+	#out { flex: 1 1 auto; overflow-y: auto; padding: 0.5rem 0.75rem; }
+	#out div { white-space: pre-wrap; min-height: 1.25em; line-height: 1.25; overflow-wrap: anywhere; }
+	#out .cmd { color: #fff; }
+	form { flex: none; display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.75rem; border-top: 1px solid #333; }
+	form span { color: #fff; }
+	#line { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: #fff; background: #000; border: 1px solid #444; padding: 0.4rem; }
+	#line:focus { outline: none; border-color: #888; }
+	#go { font: inherit; color: #ccc; background: #222; border: 1px solid #555; padding: 0.4rem 0.8rem; cursor: pointer; }
+	#keys { flex: none; display: flex; flex-wrap: wrap; gap: 0.35rem; padding: 0 0.75rem 0.4rem; }
+	#keys button { font: inherit; font-size: 14px; color: #ccc; background: #1a1a1a; border: 1px solid #444; padding: 0.3rem 0.6rem; cursor: pointer; }
+	#keys button:hover, #go:hover { background: #2a2a2a; border-color: #888; }
+	footer { flex: none; padding: 0.4rem 0.75rem 0.7rem; color: #777; font-size: 12px; line-height: 1.4; }
+	footer a { color: #aaa; }
+	footer button { font: inherit; font-size: 12px; color: #aaa; background: none; border: 1px solid #444; padding: 1px 6px; cursor: pointer; }
+</style>
+</head>
+<body>
+<div id="out" aria-live="polite"></div>
+<div id="keys">
+	<button type="button" data-send="engage">engage</button>
+	<button type="button" data-fill="survey ">survey</button>
+	<button type="button" data-fill="refuel ">refuel</button>
+	<button type="button" data-fill="set heading ">set heading</button>
+	<button type="button" data-fill="set speed ">set speed</button>
+	<button type="button" data-send="help">help</button>
+	<button type="button" data-send="start">start</button>
+	<button type="button" data-send="abandon">abandon</button>
+</div>
+<form id="form" autocomplete="off">
+	<span>&gt;</span>
+	<input id="line" type="text" maxlength="200" autocapitalize="none" autocorrect="off" spellcheck="false" aria-label="Command">
+	<button id="go" type="submit">Enter</button>
+</form>
+<footer>
+	Chaotic Space Mappers of SPLORR!! A production of TheGrumpyGameDev, made for Alakajam 10 (themes: Maps, Chaos, Ships), September 2020, in F#.
+	Rebuilt in Odin and WebAssembly in 2026 with AI assistance (Claude); the rules are the original's.
+	<a href="https://thegrumpygamedev.itch.io/">itch.io</a> · <a href="https://playdeezgames.github.io/oeuvre-of-splorr/">more games</a>
+	<button id="mute" type="button">Sound: on</button>
+</footer>
+<script type="text/javascript" src="odin.js"></script>
+<script type="text/javascript">
+	const memory = new odin.WasmMemoryInterface();
+	const out = document.getElementById("out");
+	const line = document.getElementById("line");
+	const MAX_LINES = 800;
+	let scrollQueued = false;
+	const history = [];
+	let historyAt = 0;
+
+	// ---- sound: the original's Console.Beep songs as square-wave notes, played one after another.
+	// Browsers keep audio off until the first key or click, so notes asked for before that wait in the queue.
+	let actx = null, muted = false, playhead = 0;
+	const pending = []; // [freq, ms] asked for before the audio context exists
+	try { muted = localStorage.getItem("csmos-muted") === "1"; } catch (e) {}
+	const muteButton = document.getElementById("mute");
+	function showMute() { muteButton.textContent = "Sound: " + (muted ? "off" : "on"); }
+	showMute();
+	muteButton.addEventListener("click", () => {
+		muted = !muted;
+		showMute();
+		try { localStorage.setItem("csmos-muted", muted ? "1" : "0"); } catch (e) {}
+		line.focus();
+	});
+	function schedule(freq, ms) {
+		const t = Math.max(actx.currentTime + 0.02, playhead);
+		const osc = actx.createOscillator();
+		const gain = actx.createGain();
+		osc.type = "square";
+		osc.frequency.value = freq;
+		gain.gain.setValueAtTime(0.0001, t);
+		gain.gain.linearRampToValueAtTime(0.07, t + 0.004);
+		gain.gain.setValueAtTime(0.07, t + ms / 1000 - 0.012);
+		gain.gain.linearRampToValueAtTime(0.0001, t + ms / 1000 - 0.004);
+		osc.connect(gain).connect(actx.destination);
+		osc.start(t);
+		osc.stop(t + ms / 1000);
+		playhead = t + ms / 1000;
+	}
+	function unlock() {
+		if (actx) return;
+		try {
+			actx = new (window.AudioContext || window.webkitAudioContext)();
+			actx.resume();
+			for (const [f, ms] of pending.splice(0)) schedule(f, ms);
+		} catch (e) { actx = null; }
+	}
+	for (const ev of ["keydown", "pointerdown", "touchstart"]) window.addEventListener(ev, unlock, { capture: true });
+
+	// ---- the transcript: one block per line, scrolled to the bottom like a console.
+	function addLine(text) {
+		const d = document.createElement("div");
+		d.textContent = text;
+		if (text.startsWith(">")) d.className = "cmd";
+		out.appendChild(d);
+		while (out.childElementCount > MAX_LINES) out.removeChild(out.firstChild);
+		// Reading scrollHeight forces a layout, so scroll once per frame, not once per line.
+		if (!scrollQueued) { scrollQueued = true; requestAnimationFrame(() => { scrollQueued = false; out.scrollTop = out.scrollHeight; }); }
+	}
+
+	function submitLine(text) {
+		line.value = text;
+		if (text.trim()) { history.push(text); historyAt = history.length; }
+		memory.exports.on_submit();
+		line.value = "";
+		line.focus();
+	}
+
+	const imports = {
+		env: {
+			out_line: (ptr, len) => addLine(memory.loadString(ptr, len)),
+			play_tone: (freq, ms) => {
+				if (muted) return;
+				if (actx) schedule(freq, ms); else if (pending.length < 200) pending.push([freq, ms]);
+			},
+			read_text: (ptr, cap) => {
+				const bytes = new TextEncoder().encode(line.value).slice(0, cap);
+				new Uint8Array(memory.memory.buffer, ptr, bytes.length).set(bytes);
+				return bytes.length;
+			},
+			// QA only: ?seed=N makes the game's randomness repeatable.
+			now_ms: () => { const s = new URLSearchParams(location.search).get("seed"); return s !== null ? Number(s) : Date.now(); },
+			// localStorage can be missing or throw (private windows, blocked site data): the game still plays.
+			storage_get: (kp, kl, bp, cap) => {
+				try {
+					const v = localStorage.getItem(memory.loadString(kp, kl));
+					if (v === null) return -1;
+					const bytes = new TextEncoder().encode(v);
+					if (bytes.length > cap) return -1;
+					new Uint8Array(memory.memory.buffer, bp, bytes.length).set(bytes);
+					return bytes.length;
+				} catch (e) { return -1; }
+			},
+			storage_set: (kp, kl, vp, vl) => {
+				try { localStorage.setItem(memory.loadString(kp, kl), memory.loadString(vp, vl)); } catch (e) {}
+			},
+			storage_remove: (kp, kl) => {
+				try { localStorage.removeItem(memory.loadString(kp, kl)); } catch (e) {}
+			},
+		},
+	};
+
+	document.getElementById("form").addEventListener("submit", (e) => { e.preventDefault(); submitLine(line.value); });
+	document.getElementById("keys").addEventListener("click", (e) => {
+		const b = e.target.closest("button");
+		if (!b) return;
+		if (b.dataset.send) submitLine(b.dataset.send);
+		else { line.value = b.dataset.fill; line.focus(); }
+	});
+	line.addEventListener("keydown", (e) => {
+		if (e.key === "ArrowUp" && historyAt > 0) { historyAt--; line.value = history[historyAt]; e.preventDefault(); }
+		else if (e.key === "ArrowDown" && historyAt < history.length) { historyAt++; line.value = history[historyAt] || ""; e.preventDefault(); }
+	});
+	window.addEventListener("keydown", (e) => {
+		if (!e.ctrlKey && !e.metaKey && !e.altKey && e.key.length === 1 && document.activeElement !== line) line.focus();
+	});
+
+	odin.runWasm("game.wasm", null, imports, memory).then(() => line.focus());
+</script>
+</body>
+</html>
