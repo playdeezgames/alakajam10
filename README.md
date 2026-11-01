@@ -7,7 +7,7 @@ It was an F# console game. In November 2026 it was rebuilt in Odin and WebAssemb
 Claude Code (an AI agent) doing the porting. The rules and numbers are the original's; `QUIRKS.md` lists the few
 changes and everything odd that was kept on purpose.
 
-- Play: GitHub Pages is **not live yet** (this repo is private until the user decides).
+- Play: https://playdeezgames.github.io/alakajam10/
 - Commands: `engage`, `set heading <theta> <phi>`, `set speed <0 to 1>`, `survey <number>`, `refuel <number>`, `help`, `abandon`.
 - The original F# source is still in `ChaoticSpaceMappersOfSplorr/` (build with `dotnet`; `publish.sh` is the Windows-era release script).
 
